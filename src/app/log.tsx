@@ -1,6 +1,8 @@
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -13,21 +15,37 @@ function lbsToKg(lbs: number): number {
   return Math.round((lbs / 2.2046) * 10) / 10;
 }
 
+function formatDate(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default function LogWeightScreen() {
   const { profile, addEntry } = useUserData();
   const theme = useTheme();
   const [weightInput, setWeightInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
 
   const isMetric = profile?.unitSystem === 'metric';
   const placeholder = isMetric ? 'Weight in kg (e.g. 70.5)' : 'Weight in lbs (e.g. 155.0)';
+
+  function onDateChange(_: DateTimePickerEvent, selected?: Date) {
+    if (Platform.OS === 'android') setShowPicker(false);
+    if (selected) setDate(selected);
+  }
 
   async function handleSave() {
     const value = parseFloat(weightInput);
     if (isNaN(value) || value <= 0) return;
     setSaving(true);
     const weightKg = isMetric ? value : lbsToKg(value);
-    await addEntry(weightKg);
+    await addEntry(weightKg, date);
     router.back();
   }
 
@@ -35,8 +53,9 @@ export default function LogWeightScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
-          <ThemedText themeColor="textSecondary" style={styles.hint}>
-            {isMetric ? 'Enter weight in kilograms' : 'Enter weight in pounds'}
+          {/* Weight input */}
+          <ThemedText themeColor="textSecondary" style={styles.label}>
+            {isMetric ? 'WEIGHT (KG)' : 'WEIGHT (LBS)'}
           </ThemedText>
           <TextInput
             style={[
@@ -50,6 +69,33 @@ export default function LogWeightScreen() {
             onChangeText={setWeightInput}
             autoFocus
           />
+
+          {/* Date row */}
+          <ThemedText themeColor="textSecondary" style={[styles.label, { marginTop: Spacing.three }]}>
+            DATE
+          </ThemedText>
+          <Pressable
+            style={[styles.dateRow, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
+            onPress={() => setShowPicker((v) => !v)}>
+            <ThemedText style={styles.dateText}>{formatDate(date)}</ThemedText>
+            <SymbolView
+              name={{ ios: 'calendar', android: 'calendar_today', web: 'calendar_today' }}
+              tintColor={theme.textSecondary}
+              size={18}
+            />
+          </Pressable>
+
+          {/* Inline picker (iOS) / dialog (Android) */}
+          {showPicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              maximumDate={new Date()}
+              onChange={onDateChange}
+              style={styles.picker}
+            />
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -84,11 +130,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: Spacing.two,
   },
-  hint: {
-    fontSize: 14,
-    marginBottom: Spacing.one,
+  label: {
+    fontSize: 12,
+    letterSpacing: 0.8,
+    marginBottom: Spacing.two,
   },
   input: {
     borderWidth: 1,
@@ -96,6 +142,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 20,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+  },
+  dateText: {
+    fontSize: 16,
+  },
+  picker: {
+    marginTop: Spacing.two,
   },
   actions: {
     flexDirection: 'row',

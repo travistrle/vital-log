@@ -8,7 +8,8 @@ interface UserDataContextType {
   entries: WeightEntry[];
   profile: UserProfile | null;
   loading: boolean;
-  addEntry: (weightKg: number) => Promise<void>;
+  addEntry: (weightKg: number, date?: Date) => Promise<void>;
+  deleteEntry: (id: string) => Promise<void>;
   updateProfile: (profile: UserProfile) => Promise<void>;
 }
 
@@ -29,12 +30,12 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addEntry = useCallback(
-    async (weightKg: number) => {
+    async (weightKg: number, date?: Date) => {
       if (!profile) return;
       const bmi = calculateBMI(weightKg, profile.heightMeters);
       const entry: WeightEntry = {
         id: Date.now().toString(),
-        date: new Date().toISOString(),
+        date: (date ?? new Date()).toISOString(),
         weightKg,
         bmi,
       };
@@ -45,13 +46,22 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     [entries, profile],
   );
 
+  const deleteEntry = useCallback(
+    async (id: string) => {
+      const updated = entries.filter((e) => e.id !== id);
+      setEntries(updated);
+      await saveEntries(updated);
+    },
+    [entries],
+  );
+
   const updateProfile = useCallback(async (newProfile: UserProfile) => {
     setProfile(newProfile);
     await saveProfile(newProfile);
   }, []);
 
   return (
-    <UserDataContext.Provider value={{ entries, profile, loading, addEntry, updateProfile }}>
+    <UserDataContext.Provider value={{ entries, profile, loading, addEntry, deleteEntry, updateProfile }}>
       {children}
     </UserDataContext.Provider>
   );

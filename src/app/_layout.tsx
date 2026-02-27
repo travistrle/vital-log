@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React from 'react';
 import { useColorScheme } from 'react-native';
 
@@ -9,6 +10,7 @@ import { UserDataProvider } from '@/context/UserDataContext';
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <UserDataProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AnimatedSplashOverlay />
@@ -25,5 +27,6 @@ export default function RootLayout() {
         </Stack>
       </ThemeProvider>
     </UserDataProvider>
+    </GestureHandlerRootView>
   );
 }
