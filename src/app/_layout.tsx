@@ -18,6 +18,10 @@ export default function RootLayout() {
             name="log"
             options={{ presentation: 'modal', title: 'Log Weight', headerShown: true }}
           />
+          <Stack.Screen
+            name="settings"
+            options={{ presentation: 'modal', title: 'Settings', headerShown: true }}
+          />
         </Stack>
       </ThemeProvider>
     </UserDataProvider>

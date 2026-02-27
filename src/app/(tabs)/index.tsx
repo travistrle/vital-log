@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,7 +40,11 @@ export default function HomeScreen() {
   if (!profile) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <ThemedText type="title">Vital Log</ThemedText>
+          </View>
+          <View style={styles.centeredFill}>
           <ThemedView type="backgroundElement" style={styles.card}>
             <ThemedText type="subtitle" style={styles.cardTitle}>
               Welcome to Vital Log
@@ -79,6 +84,7 @@ export default function HomeScreen() {
               </Pressable>
             )}
           </ThemedView>
+          </View>
         </SafeAreaView>
       </ThemedView>
     );
@@ -88,20 +94,32 @@ export default function HomeScreen() {
   if (entries.length === 0) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={[styles.safeArea, styles.centered]}>
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="subtitle" style={styles.cardTitle}>
-              Log your first weight
-            </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.cardText}>
-              Tap below to record your weight and start tracking your progress.
-            </ThemedText>
-            <Pressable
-              style={[styles.primaryButton, styles.fullWidth]}
-              onPress={() => router.push('/log')}>
-              <ThemedText style={styles.primaryButtonText}>Log Weight</ThemedText>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <ThemedText type="title">Vital Log</ThemedText>
+            <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
+              <SymbolView
+                name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
+                tintColor={theme.textSecondary}
+                size={22}
+              />
             </Pressable>
-          </ThemedView>
+          </View>
+          <View style={styles.centeredFill}>
+            <ThemedView type="backgroundElement" style={styles.card}>
+              <ThemedText type="subtitle" style={styles.cardTitle}>
+                Log your first weight
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.cardText}>
+                Tap below to record your weight and start tracking your progress.
+              </ThemedText>
+              <Pressable
+                style={[styles.primaryButton, styles.fullWidth]}
+                onPress={() => router.push('/log')}>
+                <ThemedText style={styles.primaryButtonText}>Log Weight</ThemedText>
+              </Pressable>
+            </ThemedView>
+          </View>
         </SafeAreaView>
       </ThemedView>
     );
@@ -129,9 +147,16 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.screenTitle}>
-          Vital Log
-        </ThemedText>
+        <View style={styles.header}>
+          <ThemedText type="title">Vital Log</ThemedText>
+          <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
+            <SymbolView
+              name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
+              tintColor={theme.textSecondary}
+              size={22}
+            />
+          </Pressable>
+        </View>
 
         {/* Latest weight card */}
         <ThemedView type="backgroundElement" style={styles.card}>
@@ -188,11 +213,15 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     maxWidth: MaxContentWidth,
   },
-  centered: {
-    justifyContent: 'center',
-  },
-  screenTitle: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: Spacing.three,
+  },
+  centeredFill: {
+    flex: 1,
+    justifyContent: 'center',
   },
   card: {
     padding: Spacing.four,
