@@ -1,4 +1,4 @@
-# Vital Log
+# ScaleShift
 
 An offline-first weight tracking app for iOS, Android, and web built with [Expo](https://expo.dev). Log your weight, track BMI, and view trends — no account or internet connection required.
 

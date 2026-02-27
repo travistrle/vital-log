@@ -42,12 +42,12 @@ export default function HomeScreen() {
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.header}>
-            <ThemedText type="title">Vital Log</ThemedText>
+            <ThemedText type="title">ScaleShift</ThemedText>
           </View>
           <View style={styles.centeredFill}>
           <ThemedView type="backgroundElement" style={styles.card}>
             <ThemedText type="subtitle" style={styles.cardTitle}>
-              Welcome to Vital Log
+              Welcome to ScaleShift
             </ThemedText>
             <ThemedText themeColor="textSecondary" style={styles.cardText}>
               Set your height to start tracking your BMI and weight trends.
@@ -96,7 +96,7 @@ export default function HomeScreen() {
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.header}>
-            <ThemedText type="title">Vital Log</ThemedText>
+            <ThemedText type="title">ScaleShift</ThemedText>
             <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
               <SymbolView
                 name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
@@ -148,7 +148,7 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <ThemedText type="title">Vital Log</ThemedText>
+          <ThemedText type="title">ScaleShift</ThemedText>
           <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
             <SymbolView
               name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
