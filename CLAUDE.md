@@ -1,116 +1,77 @@
-# CLAUDE.md ─ Weight Tracker App (React Native + Expo)
+# CLAUDE.md
 
-This file is automatically read by Claude at the start of every session.  
-It defines the project's purpose, architecture, conventions, stack, and rules.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Purpose
-Build and maintain a simple, offline-first mobile weight logging app.  
-Users can:
-- Set height (once) and choose units (metric ↔ imperial)
-- Log weight entries (with automatic date + BMI calculation)
-- View history list + weight trend line chart
-- See current/latest BMI + category
-- Always offer:
-  - BMI + category (already implemented)
-  - Healthy weight range (BMI 18.5–24.9)
-- If user provides age & gender (add to profile):
-  - BMR (Mifflin-St Jeor formula) — show on Home & Trends
-  - Optional: Rough TDEE (BMR × activity factor; let user pick sedentary/light/moderate)
-- Store age & gender in AsyncStorage alongside height & unitSystem
-- Formulas (in bmi.ts or new metrics.ts):
-  export function calculateBMR(weightKg: number, heightCm: number, age: number, gender: 'male' | 'female'): number { ... }
+Offline-first mobile weight logging app (iOS + Android + web via Expo). Users log weight entries, track BMI, view trends. No backend, no auth — all data via AsyncStorage.
 
-No backend, no auth, no cloud sync — everything is local via AsyncStorage.
+Target features:
+- Set height + unit system (metric ↔ imperial); store age & gender for BMR
+- Log weight entries with automatic BMI calculation
+- Weight trend chart + history list
+- BMR (Mifflin-St Jeor) and optional TDEE display
 
-Target: iOS + Android via Expo (managed workflow, no custom native code yet).
+## Commands
+```bash
+npm start              # Start Expo dev server (opens QR / simulator menu)
+npm run ios            # Start on iOS simulator
+npm run android        # Start on Android emulator
+npm run web            # Start web version
+npm run lint           # Run ESLint via expo lint
+npm run reset-project  # Wipe src/app/ back to blank starter
+```
 
-## Core Tech Stack (do NOT suggest alternatives unless asked)
-- React Native 0.75+ (Expo SDK 52+)
-- Expo (latest stable) — use `expo` CLI commands
-- Navigation: @react-navigation/native + @react-navigation/bottom-tabs (preferred) or stack
-- Storage: @react-native-async-storage/async-storage (NEVER suggest MMKV, Realm, SQLite unless user explicitly asks to switch)
-- Charts: react-native-chart-kit (simple line chart for weight trend)
-- Date handling: date-fns (preferred over moment — migrate if moment is present)
-- Styling: StyleSheet + minimal use of tailwind-rn / nativewind if added later
-- State: React hooks (useState, useContext) + optional Zustand if state grows complex
-- TypeScript: Yes — strict mode, no // @ts-ignore unless temporary
+Clear cache if AsyncStorage behaves strangely: `expo start --clear`
 
-## Project Structure (keep it flat & simple for now)
-.
-├── App.tsx                     # Entry + providers + navigation
-├── app.json / expo config
-├── src/
-│   ├── components/             # reusable UI (Button, Card, Input, etc.)
-│   ├── screens/                # main screens
-│   │   ├── HomeScreen.tsx      # dashboard: latest stats + quick log button
-│   │   ├── LogWeightScreen.tsx # form to add weight
-│   │   ├── TrendsScreen.tsx    # list + chart
-│   │   ├── SettingsScreen.tsx  # units, height, reset data
-│   │   └── WelcomeScreen.tsx   # first-time height setup
-│   ├── context/                # e.g. UserDataContext.tsx (height + entries)
-│   ├── hooks/                  # e.g. useWeightData.ts
-│   ├── lib/                    # utilities
-│   │   ├── storage.ts          # AsyncStorage wrappers (save/load height + entries)
-│   │   ├── bmi.ts              # calculateBMI(weightKg, heightM) + getBMICategory
-│   │   └── units.ts            # kg↔lbs, cm↔ft+in conversions
-│   └── types/                  # WeightEntry { date: string, weightKg: number, bmi: number }
-└── CLAUDE.md                   # ← you are here
+## Actual Stack (Expo SDK 55, React 19, RN 0.83.2)
+- **Routing**: `expo-router` v55 with file-based routing (`src/app/` directory). Tab UI uses `NativeTabs` from `expo-router/unstable-native-tabs`.
+- **Navigation**: `@react-navigation/native` + `@react-navigation/bottom-tabs` (installed but NativeTabs is the current implementation)
+- **Storage**: `@react-native-async-storage/async-storage` — **not yet installed**; add it when building data layer
+- **Charts**: `react-native-chart-kit` — **not yet installed**
+- **Date handling**: `date-fns` — **not yet installed**; preferred over moment
+- **Animation**: `react-native-reanimated` 4.x + `react-native-worklets` (already installed)
+- **State**: React hooks + context; Zustand optional if state grows complex
+- **TypeScript**: strict mode; `tsconfig.json` paths alias `@/` → `src/`
+- **Experiments enabled**: `typedRoutes: true`, `reactCompiler: true`
 
-## Data Model
+## Architecture
+
+### File-based routing (`src/app/`)
+`src/app/_layout.tsx` is the root layout — wraps everything in `ThemeProvider` (light/dark) and renders `<AppTabs />`. New screens go here as files; expo-router auto-generates routes.
+
+### Theme system (`src/constants/theme.ts`)
+Central source of truth for visual tokens:
+- `Colors.light` / `Colors.dark` — semantic color keys: `text`, `background`, `backgroundElement`, `backgroundSelected`, `textSecondary`
+- `Spacing` — named scale: `half=2, one=4, two=8, three=16, four=24, five=32, six=64`
+- `Fonts` — platform-aware font families (system-ui on iOS, CSS vars on web)
+- `BottomTabInset`, `MaxContentWidth` — layout constants
+
+Always use these tokens; avoid hardcoded pixel values or color literals (except action colors: `#4CAF50` save, `#F44336` delete).
+
+### Themed components
+- `ThemedText` — accepts `type` prop (`default|title|small|smallBold|subtitle|link|linkPrimary|code`) and optional `themeColor` key
+- `ThemedView` — accepts `type` prop (`background|backgroundElement`) for semantic background color
+- `useTheme()` hook — returns the current `Colors[scheme]` object
+
+### Platform-specific files
+`.web.ts` / `.web.tsx` variants override native files for web (e.g., `app-tabs.web.tsx`, `use-color-scheme.web.ts`). Keep this pattern when behavior must differ on web.
+
+## Data Model (to implement)
+```ts
 interface WeightEntry {
-  id: string;                   // iso date string or uuid
-  date: string;                 // ISO 8601 "2026-02-26T..."
+  id: string;        // uuid
+  date: string;      // ISO 8601
   weightKg: number;
   bmi: number;
 }
+// AsyncStorage keys: 'weightEntries', 'userProfile'
+// userProfile: { heightMeters, unitSystem, age?, gender? }
+```
+Store weight in kg and height in meters internally — convert only for display.
 
-Global state (via context):
-- heightMeters: number | null
-- weightEntries: WeightEntry[]
-- unitSystem: 'metric' | 'imperial'
-
-Always store weight in kg and height in meters internally — convert only for display/input.
-
-## Important Rules & Conventions
-1. Always calculate BMI = weightKg / (heightM ** 2)
-   Round to 1 decimal place.
-   Categories:
-   - Underweight: < 18.5
-   - Normal:     18.5–24.9
-   - Overweight: 25–29.9
-   - Obese:      ≥ 30
-
-2. Use ISO dates everywhere internally. Display localized friendly format (date-fns format).
-
-3. When suggesting/editing code:
-   - Prefer functional components + hooks
-   - Use TypeScript — type all props, state, context
-   - Keep screens < 300 lines if possible — extract helpers/components
-   - Add basic input validation (positive numbers, required fields)
-   - Never suggest global variables or force-unwrap optionals (!)
-   - After changes: remind to run `expo start --clear` if AsyncStorage issues appear
-
-4. UI/UX style:
-   - Clean, minimal, white/dark mode aware (use Appearance / useColorScheme if needed)
-   - SafeAreaView + ScrollView where appropriate
-   - Use consistent padding (16–24), rounded corners (8–12)
-   - Green (#4CAF50) for save/positive actions, red (#F44336) for delete/reset
-
-5. Testing / Verification:
-   - After edits, suggest running the app and manually testing the changed flow
-   - If chart is involved → verify data points match stored entries
-
-6. Never:
-   - Introduce new heavy libraries without asking (no Firebase, no Realm, no Reanimated unless needed for chart animation)
-   - Remove AsyncStorage — it's the single source of truth
-   - Suggest class components
-   - Write inline styles except tiny overrides
-
-## Common Commands / Workflows
-- "Initialize user data context" → create/update context + storage hooks
-- "Add unit toggle" → update settings + conversions
-- "Fix chart not updating" → usually stale state — force re-fetch from storage
-
-Keep this file concise but precise — update it when we discover better patterns.
-
-Last major update: February 2026
+## Key Rules
+- BMI = `weightKg / (heightM ** 2)`, rounded to 1 decimal. Categories: <18.5 Underweight, 18.5–24.9 Normal, 25–29.9 Overweight, ≥30 Obese
+- ISO dates internally; use `date-fns` for display formatting
+- Screens: functional components + hooks, keep under ~300 lines, extract components as needed
+- No class components, no global variables, no `// @ts-ignore` (except temporary), no inline styles beyond tiny overrides
+- Do not add Firebase, Realm, or SQLite without explicit request
